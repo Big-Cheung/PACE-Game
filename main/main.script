@@ -1,0 +1,35 @@
+function init(self)
+	msg.post(".", "acquire_input_focus")
+	msg.post("@render:", "use_fixed_fit_projection", { near = -1, far = 1 })
+	self.xdir = 0 
+	self.ydir = 0
+	self.moveTimer = 0
+end
+
+function on_input(self, action_id, action)
+	if action_id == hash("touch") and not (action.released or action.pressed) then
+		if math.abs(action.dx) >= 6 or math.abs(action.dy) >= 6 then
+			if math.abs(action.dx) >= math.abs(action.dy) then
+				action.dy = 0
+			else
+				action.dx = 0
+			end
+			self.xdir = action.dx ~= 0 and action.dx/(math.abs(action.dx)) or 0
+			self.ydir = action.dy ~= 0 and action.dy/(math.abs(action.dy)) or 0
+		end 
+	end
+end
+
+function update(self,dt)
+	self.moveTimer = self.moveTimer + dt
+
+	--stagger movement using a timer. this will make movements happening once per second
+	if self.moveTimer >= 0.25 then
+		local pos = go.get_position()
+		pos.x = pos.x + self.xdir*32
+		pos.y = pos.y + self.ydir*32
+		go.set_position(pos)
+		self.moveTimer = 0
+	end
+	
+end
