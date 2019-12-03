@@ -1,0 +1,45 @@
+function init(self)
+	self.personMoving = false
+	self.progressNum = {}
+end
+
+function final(self)
+	-- Add finalization code here
+	-- Remove this function if not needed
+end
+
+function update(self, dt)
+	-- Add update code here
+	-- Remove this function if not needed
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("setTiles") then
+		local tiles_node = gui.get_node("Tiles")
+		gui.set_text(tiles_node, "Tiles Left : "..message.tiles)
+	end
+	if message_id == hash("prompt") then
+		msg.post(".", "acquire_input_focus")
+		gui.show_keyboard(gui.KEYBOARD_TYPE_NUMBER_PAD, true)
+	end
+end
+
+function on_input(self, action_id, action)
+	if action_id == hash("text") then
+		if type(tonumber(action.text)) == "number" then
+			table.insert(self.progressNum, action.text)
+			print(table.concat(self.progressNum))
+		end
+	end
+	if action_id == hash("close") then
+		msg.post("/go", "setTiles", {tiles = tonumber(table.concat(self.progressNum))})
+		self.progressNum = {}
+		msg.post("/go", "focus")
+		msg.post(".", "release_input_focus")
+	end
+end
+
+function on_reload(self)
+	-- Add input-handling code here
+	-- Remove this function if not needed
+end

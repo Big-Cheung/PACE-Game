@@ -4,6 +4,12 @@ images {
 images {
   image: "/assets/background.png"
 }
+images {
+  image: "/assets/Tile32x32.jpg"
+}
+images {
+  image: "/assets/Tile64x64.jpg"
+}
 margin: 0
 extrude_borders: 0
 inner_padding: 0

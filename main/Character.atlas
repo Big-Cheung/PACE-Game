@@ -1,0 +1,15 @@
+images {
+  image: "/assets/Player/tile000.png"
+}
+images {
+  image: "/assets/Player/tile001.png"
+}
+images {
+  image: "/assets/Player/tile002.png"
+}
+images {
+  image: "/assets/Player/tile003.png"
+}
+margin: 0
+extrude_borders: 2
+inner_padding: 0

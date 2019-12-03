@@ -29,6 +29,7 @@ max_count = 8
 max_count = 128
 
 [display]
+clear_color = 0
 display_profiles = /builtins/render/default.display_profilesc
 dynamic_orientation = 0
 fullscreen = 0

@@ -1,9 +1,59 @@
+ROT = require("lib/rotLove")
+
+function fillMap()
+	local width = 10
+	local height = 15
+	local genMap = ROT.Map.Brogue(width,height)
+	local layout = {{},{}}
+	local tiles = 0
+	genMap:create(
+		function(x,y, val)
+		--Necessary conditional to create 2D table, otherwise it indexes a nil table
+		if not layout[1][x*64-32] then
+			layout[1][x*64-32] = {}
+		end
+
+		--return layout
+		val = val == 2 and 0 or val
+		layout[1][x*64-32][y*64+32] = val
+
+		--return only walls from the map
+		if val == 1 then
+			if not layout[2][x*64-32] then
+				layout[2][x*64-32] = {}
+			end
+			layout[2][x*64-32][y*64+32] = val
+		end
+		
+
+	end)
+	
+	for i,v in pairs(layout[2]) do
+		for k,n in pairs(v) do
+			local pos = vmath.vector3(i,k,0)
+			factory.create("#factory",pos)
+			tiles = tiles + 1
+		end
+	end
+	
+	return layout[2],150-tiles
+end
+
+
 function init(self)
-	msg.post(".", "acquire_input_focus")
 	msg.post("@render:", "use_fixed_fit_projection", { near = -1, far = 1 })
 	self.xdir = 0 
 	self.ydir = 0
 	self.moveTimer = 0
+	self.baseSpeed = 0.25
+	self.mapArea = 30
+	self.tiles = 30
+	self.tilesPlaced, self.mapArea = fillMap()
+	self.mapArea = 150 - self.mapArea
+	self.currentArea = self.mapArea
+	msg.post("go1#TopBar", "setTiles", {tiles = self.tiles})
+	msg.post("go1#TopBar", "prompt")
+	print(self.mapArea)
 end
 
 function on_input(self, action_id, action)
@@ -16,6 +66,15 @@ function on_input(self, action_id, action)
 			end
 			self.xdir = action.dx ~= 0 and action.dx/(math.abs(action.dx)) or 0
 			self.ydir = action.dy ~= 0 and action.dy/(math.abs(action.dy)) or 0
+			if self.xdir == 1 then 
+				sprite.play_flipbook("#logo", "tile002")
+			elseif self.xdir == -1 then
+				sprite.play_flipbook("#logo", "tile001")
+			elseif self.ydir == 1 then 
+				sprite.play_flipbook("#logo", "tile003")
+			elseif self.ydir == -1 then
+				sprite.play_flipbook("#logo", "tile000")
+			end
 		end 
 	end
 end
@@ -24,12 +83,39 @@ function update(self,dt)
 	self.moveTimer = self.moveTimer + dt
 
 	--stagger movement using a timer. this will make movements happening once per second
-	if self.moveTimer >= 0.25 then
+	if (self.moveTimer >= self.baseSpeed+((self.tiles)/(self.tiles+self.mapArea))) and (math.abs(self.xdir)+math.abs(self.ydir))>0 then
 		local pos = go.get_position()
-		pos.x = pos.x + self.xdir*32
-		pos.y = pos.y + self.ydir*32
-		go.set_position(pos)
+		local moved = false
+		pos.x = pos.x + self.xdir*64
+		pos.y = pos.y + self.ydir*64
+		if not (pos.x < 32 or pos.x > 608 or pos.y < 96 or pos.y > 992) then
+			go.set_position(pos)
+			moved = true
+		end
+		
+		if self.tiles > 0 and moved then
+			if not self.tilesPlaced[pos.x] then
+				self.tilesPlaced[pos.x] = {}
+			end
+			if not self.tilesPlaced[pos.x][pos.y] then
+				self.tiles = self.tiles - 1
+				msg.post("go1#TopBar", "setTiles", {tiles = self.tiles})
+				pos.z = 0
+				factory.create("#factory", pos)
+				self.tilesPlaced[pos.x][pos.y] = true
+			end
+		end
 		self.moveTimer = 0
 	end
 	
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("setTiles") then
+		self.tiles = message.tiles
+		msg.post("go1#TopBar", "setTiles", {tiles = self.tiles})
+	end
+	if message_id == hash("focus") then
+		msg.post(".", "acquire_input_focus")
+	end
 end
